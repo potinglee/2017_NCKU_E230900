@@ -32,9 +32,11 @@ void initLeds() {
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
 
     GPIO_InitTypeDef gpio;
-    GPIO_StructInit(&gpio);
-    gpio.GPIO_Mode = GPIO_Mode_OUT;
     gpio.GPIO_Pin = LEDS;
+    gpio.GPIO_Mode = GPIO_Mode_OUT;
+    gpio.GPIO_OType = GPIO_OType_PP;
+    gpio.GPIO_PuPd = GPIO_PuPd_DOWN;
+    gpio.GPIO_Speed = GPIO_Speed_100MHz;
     GPIO_Init(GPIOD, &gpio);
 }
 

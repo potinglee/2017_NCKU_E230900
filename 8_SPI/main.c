@@ -100,7 +100,6 @@ void initSpi(void) {
     SPI_InitStructure.SPI_CRCPolynomial = 0;
     SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
     SPI_Init(SPI1, &SPI_InitStructure);
-
     SPI_Cmd(SPI1, ENABLE);
 }
 
@@ -124,8 +123,8 @@ void mySPI_SendData(uint8_t adress, uint8_t data){
 
     GPIO_SetBits(GPIOE, GPIO_Pin_3);
 }
-
 uint8_t mySPI_GetData(uint8_t adress){
+
     // 拉低 LIS302DL的 NSS腳位以開始通訊
     GPIO_ResetBits(GPIOE, GPIO_Pin_3);
     // RW bit設為高電位，告訴 LIS302DL要讀取數值
