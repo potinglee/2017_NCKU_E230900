@@ -116,6 +116,7 @@ void slowMode()
 
 void defaultMode() {
 	RCC_DeInit();
+	// 預設使用 HSI，因此 SYSCLK約為 16MHz附近
 }
 
 void fastMode() {
