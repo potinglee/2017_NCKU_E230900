@@ -14,8 +14,9 @@ void loop() {
   // donothing
 }
 
-void main() {
+int main() {
   init();
+
   lcd_transmit_data('0');
   lcd_transmit_data('1');
   lcd_transmit_data('2');

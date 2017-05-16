@@ -35,7 +35,7 @@ CFLAGS  = -ggdb
 CFLAGS += -O0
 CFLAGS += -Wall -Wextra -Warray-bounds
 CFLAGS += $(AFLAGS)
-CFLAGS += -DSTM32F40XX
+# CFLAGS += -DSTM32F40XX
 
 ##### Linker options
 
