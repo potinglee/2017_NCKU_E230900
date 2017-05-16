@@ -64,7 +64,8 @@ SOURCES  += \
 			$(PERIPH)/src/stm32f4xx_spi.c \
 			$(PERIPH)/src/stm32f4xx_exti.c \
 			$(PERIPH)/src/stm32f4xx_syscfg.c \
-			$(PERIPH)/src/misc.c
+			$(PERIPH)/src/misc.c \
+			lcd.c
 
 # startup file, calls main
 SOURCES += startup_stm32f40xx.s

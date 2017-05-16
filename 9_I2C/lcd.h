@@ -60,7 +60,9 @@
 #define LCD_CURSOR_TO_LINE_1   BIN_TO_BYTE(1,0,0,0,0,0,0,0)
 #define LCD_CURSOR_TO_LINE_2   BIN_TO_BYTE(1,1,0,0,0,0,0,0)
 
-// init中的項目
-void gpio_init(); // 設置 gpio腳位為 i2c
-void i2c_init(); // 設置 i2c
-void HD48770_init();// 設置 LCD
+void gpio_init();
+void i2c_init();
+void lcd_transmit(uint8_t LCD_RS, uint8_t data);
+void lcd_transmit_data(uint8_t data);
+void lcd_transmit_command(uint8_t command);
+void lcd_init();

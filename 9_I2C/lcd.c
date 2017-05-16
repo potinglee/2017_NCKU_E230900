@@ -9,6 +9,7 @@ uint8_t delay_time;
               // 會在 command跟 data之前加上對應的 LCD_RS
 // lcd_transmit_data(uint8_t data)：傳送資料
 // lcd_transmit_command(uint8_t command)：傳送指令
+// lcd_init()：設定 lcd，並且初始化它
 
 void SysTick_Handler() {
   if(delay_time > 0) delay_time--;
@@ -56,16 +57,16 @@ void i2c_init() {
 void lcd_transmit(uint8_t LCD_RS, uint8_t data) {
   // 開始通訊
   I2C_GenerateSTART(I2C1, ENABLE);
-  While (!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT));
+  while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_MODE_SELECT));
   // 傳送 slave address
   I2C_Send7bitAddress(I2C1, SLAVE_ADDRESS, I2C_Direction_Transmitter);
-  While(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED));
+  while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED));
   // 傳送指令
   I2C_SendData(I2C1, LCD_RS);
-  While(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
+  while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
   //  傳送資料
   I2C_SendData(I2C1, data);
-  While(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
+  while(!I2C_CheckEvent(I2C1, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
   // 結束通訊
   I2C_GenerateSTOP(I2C1, ENABLE);
 }
@@ -83,22 +84,20 @@ void lcd_transimit_data(uint8_t command) {
 void lcd_init() {// 初始化 HD44780
   // 開頭先等待 40ms
   delay_ms(40);
+  //
+  // lcd_transmit_command(0x30);
+  // delay_ms(1);
+  // lcd_transmit_command(0x30);
+  // delay_ms(1);
+  // lcd_transmit_command(0x30);
+  // delay_ms(1);
 
-  lcd_transmit_command(0x30);
+  lcd_transmit_command(0x38); //設定為 8bit mode，兩行，5x7顯示
   delay_ms(1);
-  lcd_transmit_command(0x30);
+  lcd_transmit_command(0x0c); //設定為顯示開，有光標，光標不閃爍
   delay_ms(1);
-  lcd_transmit_command(0x30);
+  lcd_transmit_command(0x01); //清屏，光標歸位回左上角，並將地址計數器(AC)歸零
   delay_ms(1);
-
-  lcd_transmit_command(0x38);
-  delay_ms(1);
-  lcd_transmit_command(0x08);
-  delay_ms(1);
-  lcd_transmit_command(0x01);
-  delay_ms(1);
-  lcd_transmit_command(0x06);
-  delay_ms(1);
-  lcd_transmit_command(0x0c);
+  lcd_transmit_command(0x06); //寫入數據後光標右移一位
   delay_ms(1);
 }
