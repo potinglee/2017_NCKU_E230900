@@ -4,7 +4,9 @@ uint8_t delay_time;
 
 // gpio_init()：初始化 i2c腳位
 // i2c_init()：設定 i2c，時脈設為 50kHz
-// lcd_transmit(uint8_t LCD_RS, uint8_t data)：底層函式，用來傳資料跟指令，會透過其他函式使用它
+// lcd_transmit(uint8_t LCD_RS, uint8_t data)：
+              // 底層函式，用來傳資料跟指令，會透過其他函式使用它。
+              // 會在 command跟 data之前加上對應的 LCD_RS
 // lcd_transmit_data(uint8_t data)：傳送資料
 // lcd_transmit_command(uint8_t command)：傳送指令
 
@@ -90,5 +92,13 @@ void lcd_init() {// 初始化 HD44780
   delay_ms(1);
 
   lcd_transmit_command(0x38);
+  delay_ms(1);
+  lcd_transmit_command(0x08);
+  delay_ms(1);
+  lcd_transmit_command(0x01);
+  delay_ms(1);
+  lcd_transmit_command(0x06);
+  delay_ms(1);
+  lcd_transmit_command(0x0c);
   delay_ms(1);
 }

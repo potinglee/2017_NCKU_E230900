@@ -48,10 +48,10 @@
 #define LCD_RS_DATA         0x80 // lcd_transimit(0x80, data); 用來傳資料的 address
 #define LCD_RS_COMMAND      0x00 // lcd_transimit(0x00, command);  用來傳指令 address
 
-#define LCD_RW_HIGH         0b00100000 // READ from LCD
-#define LCD_RW_LOW          0b00000000 // WRITE to LCD (character or command)
+#define LCD_RW_HIGH         0x20 // READ from LCD
+#define LCD_RW_LOW          0x00 // WRITE to LCD (character or command)
 
-#define LCD_PULSE_HIGH      0b00010000 // Enable Pulse on pin 6
+#define LCD_PULSE_HIGH      0x10 // Enable Pulse on pin 6
 #define LCD_PULSE_LOW       0b00000000 // when pulse goes from high to low the data is read
 
 
