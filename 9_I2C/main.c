@@ -14,8 +14,6 @@ void init() {
 void loop() {
 }
 
-
-
 int main() {
 
   static int counter_shift = 0;
