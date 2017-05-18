@@ -11,13 +11,6 @@ uint16_t delay_time;
 // lcd_transmit_command(uint8_t command)：傳送指令
 // lcd_init()：設定 lcd，並且初始化它
 
-
-static uint16_t led_array[4] = {
-  GPIO_Pin_12, GPIO_Pin_13, GPIO_Pin_14, GPIO_Pin_15
-};
-static int i = 0;
-
-
 void SysTick_Handler() {
   if(delay_time > 0) delay_time--;
 }
@@ -66,47 +59,66 @@ void i2c_init() {
   I2C_InitStructure.I2C_OwnAddress1 = 0x00;
   I2C_InitStructure.I2C_Ack = I2C_Ack_Enable;
   I2C_InitStructure.I2C_AcknowledgedAddress = I2C_AcknowledgedAddress_7bit;
-  I2C_InitStructure.I2C_ClockSpeed = 20000;
+  I2C_InitStructure.I2C_ClockSpeed = 50000;
 
   I2C_Init(I2C3, &I2C_InitStructure);
   I2C_Cmd(I2C3, ENABLE);
 }
 
-// LCD_RS有兩種選擇：
-      // LCD_RS_DATA：用來傳資料
-      // LCD_RS_COMMAND：用來傳指令
-void lcd_transmit(uint8_t data) {
-  while(I2C_GetFlagStatus(I2C3, I2C_FLAG_BUSY));
-  // 開始通訊
-  I2C_GenerateSTART(I2C3, ENABLE);
-  while(!I2C_CheckEvent(I2C3, I2C_EVENT_MASTER_MODE_SELECT));
-  // 傳送 slave address
-  I2C_Send7bitAddress(I2C3, SLAVE_ADDRESS, I2C_Direction_Transmitter);
-  while(!I2C_CheckEvent(I2C3, I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED));
-  //  傳送資料
-  I2C_SendData(I2C3, 0x01);
-  while(!I2C_CheckEvent(I2C3, I2C_EVENT_MASTER_BYTE_TRANSMITTED));
-    // 結束通訊
-  delay_ms(1000);
-  I2C_GenerateSTOP(I2C3, ENABLE);
+// 會先傳送 high nibble，再傳送 low nibble
+// 輸入想輸入的資料 data或 command
+// lcd_transmit_4bit_mode(RS_data, data) or
+// lcd_transmit_4bit_mode(RS_command, command)
+void lcd_write_4bit_mode(uint8_t RS, uint8_t input) {
+  /* 將 input分成 high nibble 跟 low nibble */
+  uint8_t high_nibble = (input & 0xf0);
+  uint8_t low_nibble = (input & 0x0f)<<4;
+  /* 決定資料是屬於 command還是 data */
+  if(RS == RS_data) {
+    high_nibble |= write_data;
+    low_nibble |= write_data;
+  }
+  /* 傳送 high nibble */
+  lcd_transmit(high_nibble | ENABLE_HIGH);      // 傳送資料
+  /* 傳縙 ENABLE_LOW, 寫入資料*/
+  lcd_transmit(high_nibble | ENABLE_LOW);       // 傳送資料
+  delay_ms(5);
+  /* 傳送 low nibble */
+  lcd_transmit(low_nibble | ENABLE_HIGH);       // 傳送資料
+  /* 傳縙 ENABLE_LOW, 寫入資料*/
+  lcd_transmit(low_nibble | ENABLE_LOW);        // 傳送資料
+  delay_ms(5);
 }
 
 // 用來傳資料
-void lcd_transmit_data(uint8_t data) {
+void lcd_transmit_4bit_mode_data(uint8_t data) {
+  lcd_write_4bit_mode(RS_data, data);
 }
 
 // 用來傳指令
-void lcd_transmit_command(uint8_t command) {
+void lcd_transmit_4bit_mode_command(uint8_t command) {
+  lcd_write_4bit_mode(RS_command, command);
+}
+
+void lcd_write_string(char * str) {
+  while (*str) {
+    lcd_transmit_4bit_mode_data(*str);
+    str++;
+  }
 }
 
 void lcd_init() {// 初始化 HD44780
-  // 開頭先等待 40ms
+  /* 開頭先等待 40ms */
   delay_ms(40);
-  lcd_transmit_command(0x33);
-  delay_ms(1);
-  lcd_transmit_command(0x32);
+  lcd_transmit_4bit_mode_command(0x03);
+  delay_ms(15);
+  lcd_transmit_4bit_mode_command(0x03);
+  delay_ms(15);
+  lcd_transmit_4bit_mode_command(0x03);
+  delay_ms(15);
+  lcd_transmit_4bit_mode_command(0x02);
   delay_ms(1);
 
-  lcd_transmit_command(0x38); //設定為 8bit mode，兩行，5x7顯示
+  lcd_transmit_4bit_mode_command(0x01); //clear display
   delay_ms(1);
 }
