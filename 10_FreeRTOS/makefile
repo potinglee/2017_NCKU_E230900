@@ -1,0 +1,174 @@
+#改FreeRTOS_Config.h中的SystemCoreClock為168000000
+
+################################################################################
+# Generic Makefile for STM32 based applications using StdPeriph/STM32Cube.     #
+#                                                                              #
+# Copyright (C) 2015 by Joel Bodenmann                      #
+#                                                                              #
+# Feel free to use this makefile without any warranty on your own risk.        #
+################################################################################
+
+# This is the name of the binaries that will be generated
+PROJECT_NAME = FreeRTOS_transplant
+
+# Some paths
+DISCOVERY = Library
+DEVICE    = $(DISCOVERY)/CMSIS/Device/ST/STM32F4xx/Include
+CORE 	  = $(DISCOVERY)/CMSIS/Include
+PERIPH    = $(DISCOVERY)/STM32F4xx_StdPeriph_Driver
+FREERTOS  = $(DISCOVERY)/FreeRTOS
+# DRIVER    = driver
+# COMMON    = Common
+
+# Include uGFX stuff, don't forget about $(GFXSRC) and $(GFXINC) further below
+# GFXLIB          = ugfx_2.8
+# GFXSINGLEMAKE   = yes
+# OPT_OS          = raw32
+# include $(GFXLIB)/gfx.mk
+# include $(GFXLIB)/src/gdisp/gdisp.mk
+# include $(GFXLIB)/src/gdriver/gdriver.mk
+
+# Here we add the paths to all include directories
+INCS += \
+        . \
+        $(DEVICE) \
+        $(CORE) \
+        $(PERIPH)/inc \
+        $(FREERTOS)/include \
+        $(FREERTOS)/portable/GCC/ARM_CM4F
+
+# Here we add all *.c files that we want to compile
+SRCS += \
+        $(PERIPH)/src/stm32f4xx_rcc.c \
+        $(PERIPH)/src/stm32f4xx_gpio.c \
+        $(PERIPH)/src/stm32f4xx_syscfg.c \
+        $(PERIPH)/src/stm32f4xx_usart.c \
+        $(PERIPH)/src/misc.c \
+        main.c \
+        system_stm32f4xx.c \
+        $(FREERTOS)/croutine.c \
+        $(FREERTOS)/event_groups.c \
+        $(FREERTOS)/list.c \
+        $(FREERTOS)/queue.c \
+        $(FREERTOS)/tasks.c \
+        $(FREERTOS)/timers.c \
+        $(FREERTOS)/portable/GCC/ARM_CM4F/port.c \
+        $(FREERTOS)/portable/MemMang/heap_1.c
+
+# StartUp file
+STARTUP			= startup_stm32f40xx.s
+
+# Linker script
+LDSCRIPT		= stm32f407vg_flash.ld
+
+# The controller type
+CONTROLLER 		= STM32F40_41xxx
+
+# MCU flags
+MCUFLAGS		= -mthumb -mcpu=cortex-m4
+
+MCUFLAGS		+= -mfloat-abi=hard -mfpu=fpv4-sp-d16
+
+MCUFLAGS                += -DHSE_VALUE=8000000
+
+# Should a map file be generated? (yes / no)
+GENERATE_MAP	        = no
+
+# The following variables hold binaries and settings
+CROSS_COMPILE	          	= arm-none-eabi
+AS 				= $(CROSS_COMPILE)-gcc
+LD         			= $(CROSS_COMPILE)-gcc
+CC         			= $(CROSS_COMPILE)-gcc
+CPPC       			= $(CROSS_COMPILE)-g++
+SIZE 				= $(CROSS_COMPILE)-size
+OBJCOPY	        		= $(CROSS_COMPILE)-objcopy
+ASFLAGS				= -ggdb -Wall
+CFLAGS     			= -ggdb -Wall -std=c99
+CPPFLAGS   			= -ggdb -Wall
+LDFLAGS    			= -lnosys -fno-exceptions -fdata-sections
+
+################################################################################
+# Don't change anything below this line                                        #
+################################################################################
+
+# Some directory and file magic
+BUILDDIR	 = build
+OBJDIR  	 = $(BUILDDIR)/obj
+MAPFILE		 = $(BUILDDIR)/$(PROJECT_NAME).map
+
+# Add the startup file
+ASSRCS		+= $(STARTUP)
+
+# Generate the object names
+OBJS		 = $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(SRCS:%.c=%.o))))
+OBJS		+= $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(ASSRCS:%.s=%.o))))
+OBJS		+= $(addprefix $(OBJDIR)/,$(addsuffix .o,$(basename $(CPPSRCS:%.cpp=%.o))))
+
+# Automate the inclusion paths
+CFLAGS    	+= $(INCS:%=-I%) $(MCUFLAGS) -D$(CONTROLLER)
+CPPFLAGS  	+= $(INCS:%=-I%)
+LDFLAGS   	+= $(LIBDIRS:%=-L%) $(INCS:%=-I%) $(LIBS) $(MCUFLAGS) -T$(LDSCRIPT) --specs=nosys.specs
+# -allow-multiple-definition
+
+# CFLAGS          += -DGFX_CPU=GFX_CPU_CORTEX_M4
+CFLAGS          += -DUSE_STDPERIPH_DRIVER
+# CFLAGS          += -DUSE_FULL_ASSERT
+
+# Some user settings magic
+ifeq ($(GENERATE_MAP), yes)
+  LDFLAGS += -Wl,-Map=$(MAPFILE),--cref
+endif
+
+# This is the default PROJECT_NAME if the user does just calls 'make'
+all: build size
+
+# Build all the files
+build: builddirs $(BUILDDIR)/$(PROJECT_NAME).elf $(BUILDDIR)/$(PROJECT_NAME).bin $(BUILDDIR)/$(PROJECT_NAME).hex
+
+# Create the required directories (if not already existing)
+builddirs:
+	@mkdir -p $(BUILDDIR)
+	@mkdir -p $(OBJDIR)
+
+# Create the *.bin
+$(BUILDDIR)/%.bin: $(BUILDDIR)/$(PROJECT_NAME).elf
+	@$(OBJCOPY) -O binary $< $@
+
+# Create the *.hex
+$(BUILDDIR)/%.hex: $(BUILDDIR)/$(PROJECT_NAME).elf
+	@$(OBJCOPY) -O ihex $< $@
+
+# Link everything together to a *.elf file
+$(BUILDDIR)/$(PROJECT_NAME).elf: $(OBJS)
+	@echo Linking $@
+	@$(LD) $(LDFLAGS) -o $(BUILDDIR)/$(PROJECT_NAME).elf $(OBJS)
+
+# Compile assembly files
+$(OBJDIR)/%.o: %.s
+	@mkdir -p $(dir $@)
+	@echo Compiling $^
+	@$(AS) $(ASFLAGS) -c -o $@ $^
+
+# Compile c files
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	@echo Compiling $^
+	@$(CC) $(CFLAGS) -c -o $@ $^
+
+# Print size information
+size: $(BUILDDIR)/$(PROJECT_NAME).elf
+	@echo
+	@echo
+	$(SIZE) $^
+	@echo $(FOO)
+
+# Clean up
+clean:
+	@rm -rf *.o $(BUILDDIR) $(OBJS) $($MAPFILE) $(PROJECT_NAME).*
+	@echo Done
+
+flash:
+	st-flash write $(BUILDDIR)/$(PROJECT_NAME).bin 0x8000000
+
+# Clean must be a phony PROJECT_NAME so make knows this never exists as a file
+.PHONY: clean

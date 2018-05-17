@@ -50,7 +50,7 @@ void initButton() {
     gpio.GPIO_Mode = GPIO_Mode_IN;
     gpio.GPIO_PuPd = GPIO_PuPd_NOPULL;
     gpio.GPIO_Pin = USER_BUTTON;
-    GPIO_Init(GPIOD, &gpio);
+    GPIO_Init(GPIOA, &gpio);
 }
 
 void initExtInterrupt() {
